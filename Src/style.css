@@ -4,6 +4,17 @@
     height:600px;
     margin: 0 auto;
 }
+#minor{
+    height:100%;
+    width:33%;
+    display:none;
+    float:left;
+}
+#main{
+    float:left;
+    height:100%;
+    width:100%;
+}
 .legendbox{
     position: absolute;
     top:0;
