@@ -1,0 +1,71 @@
+.box{
+    position: relative;
+    width:90%;
+    height:600px;
+    margin: 0 auto;
+}
+.legendbox{
+    position: absolute;
+    top:0;
+    left:0;
+    width:160px;
+    height:300px;
+    overflow: auto;
+    font-size: 12px;
+    display: none;
+}
+.legendItem{
+    margin:5px 0;
+    -ms-user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
+    cursor: pointer;
+}
+.label{
+    float:left;
+    display: block;
+    width:20px;
+    height:12px;
+    margin:0 5px;
+    background-color: #ccc;
+}
+.active{
+    background-color: orange;
+}
+.title{
+    float:left;
+    display: block;
+    width:100px;
+    line-height: 1;
+    color:#fff;
+    overflow:hidden;
+    white-space:nowrap;
+    text-overflow:ellipsis;
+}
+.waybillList{
+    position: absolute;
+    top:0;
+    right:0;
+    width:250px;
+    height:150px;
+    display: none;
+    color:#fff;
+    overflow: auto;
+}
+.details{
+    position: absolute;
+    top:0;
+    right:0;
+    width:350px;
+    height:450px;
+    display: none;
+    color:#fff;
+    overflow: auto;
+}
+.show{
+    display: block;
+}
+
+.clearfloat:after{display:block;clear:both;content:"";visibility:hidden;height:0}
+.clearfloat{zoom:1} 
