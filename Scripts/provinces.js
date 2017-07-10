@@ -1,4 +1,10 @@
 $(function () {
+    $(".box").css({ width: $(window).width(), height: $(window).height() });
+    $(window).resize(function () {
+        $(".box").css({ width: $(window).width(), height: $(window).height() });
+        myChart.resize();
+    });
+
     $(".content").mCustomScrollbar();
 
     var myChart;
@@ -12,32 +18,35 @@ $(function () {
     var provincesTrunk = GetProvincesTrunk();
     //全国城市坐标
     var citys = GetCitys();
+    //全省干线
+    var citysTrunk;
+
+    //所选省份
+    var selectedProvince;
+
     var trunkList = ["全国"];
     for (var x in provincesTrunk) {
         trunkList.push(provincesTrunk[x].name);
     }
-
     SetOption("全国");
 
     //生成左上角的legend
     function SetLegend(_trunkList) {
         var html = "";
-        for (var i = 0; i < 10; i += 1) {
-            for (var x in _trunkList) {
-                html += "<div class='legendItem clearfloat' onclick=\"ClickLegend('" + _trunkList[x] + "')\"><span class='label'></span><span class='title'>" + _trunkList[x] + "</span></div>"
-            }
+        for (var x in _trunkList) {
+            //  html += "<div class='legendItem clearfloat' onclick=\"ClickLegend('" + _trunkList[x] + "')\"><span class='label'></span><span class='title'>" + _trunkList[x] + "</span></div>"
+            html += "<option value='" + _trunkList[x] + "'>" + _trunkList[x] + "</option>"
         }
 
         $(".legendbox").addClass("show");
         $(".legend").html(html);
     }
-    //控制legend点击后的激活颜色
-    $(".legend").on("click", ".legendItem", function () {
-        $(this).siblings().children(".label").removeClass("active");
-        $(this).children(".label").addClass("active");
-    });
-    //legend的点击事件，重新渲染视图
-    ClickLegend = function (_seriesName) {
+    //legend的change事件，重新渲染视图
+    $(".box").on("change", "#legend", function () {
+        var animate = new Animate();
+        animate.ClearWaybillbox();
+        animate.ClearDetailsbox();
+        var _seriesName = $(this).val();
         var selected = {};
         for (var x in provincesTrunk) {
             if (provincesTrunk[x].name === _seriesName) {
@@ -59,14 +68,38 @@ $(function () {
             }
         };
         myChart.clear();
-        /*myChart.un(ecConfig.EVENT.CLICK);
-        myChart.on(ecConfig.EVENT.CLICK, function (param) {
-                            alert(param.seriesIndex);
-                            return;
-                        });*/
-
         myChart.setOption(_option, true);
-    }
+    });
+    //控制legend点击后的激活颜色
+    /*$(".legend").on("click", ".legendItem", function () {
+        $(this).siblings().children(".label").removeClass("active");
+        $(this).children(".label").addClass("active");
+    });*/
+    //legend的点击事件，重新渲染视图
+    /*ClickLegend = function (_seriesName) {
+        var selected = {};
+        for (var x in provincesTrunk) {
+            if (provincesTrunk[x].name === _seriesName) {
+                selected[provincesTrunk[x].name] = true;
+            } else {
+                selected[provincesTrunk[x].name] = false;
+            }
+        }
+        var _option = myChart.getOption();
+        _option.series = SetSeries(_seriesName);
+        _option.legend = {
+            show: false,
+            orient: 'vertical',
+            x: 'left',
+            data: [_seriesName],
+            selectedMode: 'single',
+            textStyle: {
+                color: '#fff'
+            }
+        };
+        myChart.clear();
+        myChart.setOption(_option, true);
+    }*/
 
     //初始化设置option
     function SetOption(_seriesName) {
@@ -75,7 +108,7 @@ $(function () {
         // 路径配置
         require.config({
             paths: {
-                echarts: '../Scripts/echarts'
+                echarts: 'Scripts/echarts'
             }
         });
 
@@ -120,22 +153,22 @@ $(function () {
                             color: '#fff'
                         }
                     },
-                    toolbox: {
-                        show: true,
-                        orient: 'vertical',
-                        x: 'right',
-                        y: 'center',
-                        feature: {
-                            mark: { show: true },
-                            dataView: { show: true, readOnly: false },
-                            restore: { show: true },
-                            saveAsImage: { show: true }
-                        }
-                    },
+                    /* toolbox: {
+                         show: true,
+                         orient: 'vertical',
+                         x: 'right',
+                         y: 'center',
+                         feature: {
+                             mark: { show: true },
+                             dataView: { show: true, readOnly: false },
+                             restore: { show: true },
+                             saveAsImage: { show: true }
+                         }
+                     },*/
                     //值域选择
                     dataRange: {
                         //显示策略
-                        show: false,
+                        show: true,
                         //指定的最小值，eg: 0，默认无，必须参数，唯有指定了splitList时可缺省min。
                         min: 0,
                         //指定的最大值，eg: 100，默认无，必须参数，唯有指定了splitList时可缺省max
@@ -167,8 +200,9 @@ $(function () {
                         $(".legendbox").removeClass("show");
                         $(".legend").html("");
                         myChart.dispose();
-                        //alert("将进入省仓支线总览，敬请期待");
                         SetSecondInit(param.name);
+
+                        //alert("将进入 "+param.name+" 的省仓支线总览，敬请期待");
                     }
                 });
                 // myChart.hideLoading();
@@ -195,8 +229,9 @@ $(function () {
         if (_seriesName === "全国") {
             for (var x in provincesTrunk) {
                 // markLineData[x] = [];
+                //pointData = provincesTrunk[x].Terminus;
                 for (y in provincesTrunk[x].Terminus) {
-                    lineData.push([{ name: provincesTrunk[x].firstStation }, { name: provincesTrunk[x].Terminus[y].name }]);
+                    lineData.push([{ name: provincesTrunk[x].firstStation }, { name: provincesTrunk[x].Terminus[y].name, value: provincesTrunk[x].Terminus[y].value }]);
                     pointData.push(provincesTrunk[x].Terminus[y]);
                     //markLineData[x].push([{ name: provincesTrunk[x].firstStation }, provincesTrunk[x].Terminus[y]]);
                 }
@@ -207,7 +242,7 @@ $(function () {
             if (_provinces) {
                 pointData = _provinces.Terminus;
                 for (y in _provinces.Terminus) {
-                    lineData.push([{ name: _provinces.firstStation }, { name: _provinces.Terminus[y].name }]);
+                    lineData.push([{ name: _provinces.firstStation }, { name: _provinces.Terminus[y].name, value: _provinces.Terminus[y].value }]);
                     // provinces.push(provincesTrunk[x].Terminus[y]);
                 }
             }
@@ -366,11 +401,11 @@ $(function () {
                     series.push(newObj);
                 }*/
     }
+    var cityTrunkList = []
     //设置第二次初始化
     function SetSecondInit(_selectedProvince) {
-        $("#main").css("width", "66%");
+        //$("#main").css("width", "67%");
         $("#minor").css("display", "block");
-        $(".waybillList").css("color", "#000");
         SetChina(_selectedProvince);
         SetCityOption(_selectedProvince);
     }
@@ -379,7 +414,7 @@ $(function () {
         // 路径配置
         require.config({
             paths: {
-                echarts: '../Scripts/echarts'
+                echarts: 'Scripts/echarts'
             }
         });
 
@@ -393,21 +428,29 @@ $(function () {
                 // 基于准备好的dom，初始化echarts图表
                 myCityChart = ec.init(document.getElementById('main'));
                 //   myCityChart.showLoading({ text: "数据加载中......" });
-                var series = SetCitySeries(_selectedProvince);
+                var series = SetCitySeries(_selectedProvince, true);
                 option = {
+                    backgroundColor: '#1b1b1b',
                     series: series,
                     legend: {
                         x: 'right',
                         data: []
                     },
                     dataRange: {
-                        orient: 'horizontal',
-                        x: 'right',
+                        //显示策略
+                        show: true,
+                        //指定的最小值，eg: 0，默认无，必须参数，唯有指定了splitList时可缺省min。
                         min: 0,
-                        max: 1000,
-                        color: ['orange', 'yellow', 'lime', 'aqua', '#ff3333'],
-                        text: ['高', '低'],           // 文本，默认为数值文本
-                        splitNumber: 0
+                        //指定的最大值，eg: 100，默认无，必须参数，唯有指定了splitList时可缺省max
+                        max: 100,
+                        //是否启用值域漫游，启用后无视splitNumber和splitList，值域显示为线性渐变 
+                        calculable: true,
+                        //值域颜色标识，颜色数组长度必须>=2，颜色代表从数值高到低的变化，即颜色数组低位代表数值高的颜色标识 ，支持Alpha通道上的变化（rgba）
+                        color: ['#ff3333', 'orange', 'yellow', 'lime', 'aqua'],
+                        //默认只设定了值域控件文字颜色
+                        textStyle: {
+                            color: '#fff'
+                        }
                     }
                 };
                 ecConfig = require('echarts/config');
@@ -425,54 +468,93 @@ $(function () {
 
                 myCityChart.setOption(option);
                 //   myCityChart.hideLoading();
+                var cityTrunkList = ["全省"];
+                for (var x in citysTrunk) {
+                    cityTrunkList.push(citysTrunk[x].firstStation);
+                }
+                SetLegend(cityTrunkList);
+                selectedProvince = _selectedProvince;
+                $(".box").off("change", "#legend");
+                $(".box").on("change", "#legend", function () {
+                    var animate = new Animate();
+                    animate.ClearWaybillbox();
+                    animate.ClearDetailsbox();
+                    var _seriesName = $(this).val();
+                    /*var selected = {};
+                    for (var x in citysTrunk) {
+                        if (citysTrunk[x].firstStation === _seriesName) {
+                            selected[citysTrunk[x].firstStation] = true;
+                        } else {
+                            selected[citysTrunk[x].firstStation] = false;
+                        }
+                    }*/
+                    var _option = myCityChart.getOption();
+                    _option.series = SetCitySeries(selectedProvince, false, _seriesName);
+                    _option.legend = {
+                        show: false,
+                        orient: 'vertical',
+                        x: 'left',
+                        data: [_seriesName],
+                        selectedMode: 'single',
+                        textStyle: {
+                            color: '#fff'
+                        }
+                    };
+                    myCityChart.clear();
+                    myCityChart.setOption(_option, true);
+                });
             }
         );
 
-
-        /*        var _option = {
-                    series: series,
-                    legend: {
-                        x: 'right',
-                        data: []
-                    },
-                    dataRange: {
-                        orient: 'horizontal',
-                        x: 'right',
-                        min: 0,
-                        max: 1000,
-                        color: ['orange', 'yellow', 'lime', 'aqua', '#ff3333'],
-                        text: ['高', '低'],           // 文本，默认为数值文本
-                        splitNumber: 0
-                    }
-                };*/
-        /*        myChart.clear();
-                myChart.un(ecConfig.EVENT.CLICK);*/
-        /*        myChart.on(ecConfig.EVENT.CLICK, function (param) {
-                    console.log(param);
-                    return;
-                });
-                myChart.setOption(_option, true);*/
-
     }
     //初始化省仓支线中的省份地图option的series
-    function SetCitySeries(_selectedProvince) {
+    function SetCitySeries(_selectedProvince, _isProvince, _selectedCity) {
         var lineData = [];
         var pointData = [];
 
         var series = [];
-        var _cityTrunk = GetCityTrunk(_selectedProvince);
-        if (_cityTrunk.Terminus) {
-            pointData = _cityTrunk.Terminus;
-            for (y in _cityTrunk.Terminus) {
-                lineData.push([{ name: _cityTrunk.firstStation }, { name: _cityTrunk.Terminus[y].name }]);
-                // provinces.push(provincesTrunk[x].Terminus[y]);
+
+
+        if (_isProvince) {
+            citysTrunk = GetCityTrunk(_selectedProvince);
+            var _cityTrunk = citysTrunk;
+            for (var x in _cityTrunk) {
+                // markLineData[x] = [];
+                for (y in _cityTrunk[x].Terminus) {
+                    lineData.push([{ name: _cityTrunk[x].firstStation }, { name: _cityTrunk[x].Terminus[y].name, value: _cityTrunk[x].Terminus[y].value }]);
+                    pointData.push(_cityTrunk[x].Terminus[y]);
+                }
+            }
+        } else {
+            var trunk;
+            if (_selectedCity === "全省") {
+                for (var x in citysTrunk) {
+                    for (y in citysTrunk[x].Terminus) {
+                        lineData.push([{ name: citysTrunk[x].firstStation }, { name: citysTrunk[x].Terminus[y].name, value: citysTrunk[x].Terminus[y].value }]);
+                        pointData.push(citysTrunk[x].Terminus[y]);
+                    }
+                }
+            } else {
+                for (var x in citysTrunk) {
+                    if (citysTrunk[x].firstStation === _selectedCity) {
+                        trunk = citysTrunk[x];
+                        break;
+                    }
+                }
+            }
+            if (trunk) {
+                pointData = trunk.Terminus;
+                for (y in trunk.Terminus) {
+                    lineData.push([{ name: trunk.firstStation }, { name: trunk.Terminus[y].name, value: trunk.Terminus[y].value }]);
+                    // provinces.push(provincesTrunk[x].Terminus[y]);
+                }
             }
         }
-
 
         var _series = [{
             name: '',
             type: 'map',
+            roam: 'scale',
             mapType: _selectedProvince,
             itemStyle: {
                 normal: {
@@ -489,9 +571,8 @@ $(function () {
                 //}
             },
             mapLocation: {
-                x: 'left',
-                y: 'top',
-                //width: '90%'
+                x: 'center',
+                y: 'top'
             },
             roam: true,
             data: [],
@@ -550,7 +631,7 @@ $(function () {
 
         return _series;
     }
-
+    //生成省仓支线图中的全国地图
     function SetChina(_selectedProvince) {
         // 路径配置
         require.config({
@@ -612,9 +693,11 @@ $(function () {
                 myChinaChart = ec.init(document.getElementById('minor'));
                 //   myChinaChart.showLoading({ text: "数据加载中......" });
                 option = {
-                    tooltip: {
+                    // backgroundColor: '#1b1b1b',
+                    //提示框，鼠标悬浮交互时的信息提示 
+                    /*tooltip: {
                         trigger: 'item'
-                    },
+                    },*/
 
                     series: [
                         {
@@ -624,6 +707,7 @@ $(function () {
                             },
                             name: '选择器',
                             type: 'map',
+                            roam: 'scale',
                             mapType: 'china',
                             mapLocation: {
                                 x: 'left',
@@ -642,8 +726,11 @@ $(function () {
                 };
                 ecConfig = require('echarts/config');
                 myChinaChart.on(ecConfig.EVENT.MAP_SELECTED, function (param) {
+                    var animate = new Animate();
+                    animate.ClearWaybillbox();
+                    animate.ClearDetailsbox();
+
                     var selected = param.selected;
-                    var selectedProvince;
                     for (var x in selected) {
                         if (selected[x]) {
                             selectedProvince = x;
@@ -654,59 +741,114 @@ $(function () {
                     console.log(selectedProvince);
 
                     var _option = myCityChart.getOption();
-                    _option.series = SetCitySeries(selectedProvince);
+                    _option.series = SetCitySeries(selectedProvince, true);
                     myCityChart.clear();
                     myCityChart.setOption(_option, true);
 
-                });
 
+                    var cityTrunkList = ["全省"];
+                    for (var x in citysTrunk) {
+                        cityTrunkList.push(citysTrunk[x].firstStation);
+                    }
+                    SetLegend(cityTrunkList);
+
+                });
                 myChinaChart.setOption(option);
                 //   myChinaChart.hideLoading();
             }
         );
     }
+
+    var Animate = function () { };
+    Animate.prototype = {
+        ClearWaybillbox: function () {
+            $(".waybillList").hide(1000);
+            $(".tbodybox").animate({ height: "0" }, 1000);
+        },
+        InitWaybillbox: function () {
+            $(".waybillList").show(1000);
+            $(".tbodybox").animate({ height: "0" });
+        },
+        ShowTbodybox: function () {
+            $(".tbodybox").animate({ height: "130px" }, 1000);
+            $(".detailsbox").animate({ height: "230px", width: "330px" });
+        },
+        ClearDetailsbox: function () {
+            $(".detailsbox").animate({ height: "0", width: "0" }, 1000);
+            $(".detailsbox").hide(1000);
+            $(".detailsbox .table").animate({ height: "0" }, 1000);
+        },
+        InitDetailsbox: function () {
+            //  $(".detailsbox").animate({ height: "314px" });
+            $(".detailsbox").show();
+            $(".detailsbox .table").animate({ height: "16px" }, 1000);
+        },
+        ShowDetails: function () {
+            //$(".detailsbox .table").css('height')
+            // $(".detailsbox").animate({ height: "314px" }, 1000);
+            var _height = $(".details").height();
+            if (_height > 228) {
+                _height = 228;
+            }
+            $(".detailsbox .table").animate({ height: _height + "px" }, 1000);
+        },
+    }
     //显示运单清单
     function ShowWaybill(_firstStation, _Terminus) {
-        $(".waybillList table tbody").html("<tr><td colspan='3'>获取运单清单中，请稍后...</td></tr>");
-        $(".details").removeClass("show");
-        $(".waybillList").addClass("show");
+        $(".waybillList .table .tbody").html("<div><span>获取运单清单中，请稍后...</span></div>");
+        var animate = new Animate();
+        animate.InitWaybillbox();
+        animate.ClearDetailsbox();
         var html = "";
         var res = GetWaybillList(_firstStation, _Terminus);
         if (res.IsExist) {
             var List = res.waybill;
             for (var x in List) {
-                html += "<tr onclick=\"ShowDetails('" + List[x].WaybillNo + "')\"><td>" + List[x].WaybillNo + "</td><td>" + List[x].ExpressNo + "</td><td>" + List[x].Num + "</td></tr>";
+                html += "<div class='btnclick clearfloat' onclick=\"ShowDetails('" + List[x].WaybillNo + "')\"><label title='" + List[x].WaybillNo + "'>" + List[x].WaybillNo + "</label><label title='" + List[x].ExpressNo + "'>" + List[x].ExpressNo + "</label><label title='" + List[x].Num + "'>" + List[x].Num + "</label><label title='" + List[x].shipping + "'>" + List[x].shipping + "</label></div>";
             }
         } else {
-            html = "<tr><td colspan='3'>" + res.message + "</td></tr>";
+            html = "<div class='clearfloat'><span>" + res.message + "</span></div>";
         }
         var t = setTimeout(show, 1000);
         function show() {
-            $('.waybillList table tbody').html(html);
+            $('.waybillList .table .tbody').html(html);
+            animate.ShowTbodybox();
             clearTimeout(t);
         }
     }
+    $(".waybillList").on("click", ".btnclick", function () {
+        $(this).siblings().removeClass("select");
+        $(this).addClass("select");
+    });
+    //关闭运单清单
+    CloseWaybill = function () {
+        var animate = new Animate();
+        animate.ClearWaybillbox();
+        animate.ClearDetailsbox();
+        //$(".detailsbox").hide(1000);
+    }
     //显示运单详情
     ShowDetails = function (_WaybillNo) {
-        $(".waybillList").removeClass("show");
         $(".details").html("获取清单详情中，请稍后...");
-        $(".details").addClass("show");
+        var animate = new Animate();
+        animate.InitDetailsbox();
+        // $(".detailsbox").show(1000);
         var html = "";
         var res = GetDetails(_WaybillNo);
         if (res.IsExist) {
             var _List = res.details;
             console.log(_List);
             for (var x in _List) {
-                html += "<div><div class=\"item\">";
-                html += "<span>" + _List[x].date + "</span><span>" + _List[x].day + "</span><span>" + _List[x].subDetails[0].time + "</span><span>" + _List[x].subDetails[0].message + "</span></div>";
-                html += "<div class=\"subitem\">";
+                html += "<div><div class=\"item clearfloat\">";
+                html += "<label title='" + _List[x].date + "'>" + _List[x].date + "</label><label title='" + _List[x].address + "'>" + _List[x].address + "</label><label title='" + _List[x].subDetails[0].time + "'>" + _List[x].subDetails[0].time + "</label><label title='" + _List[x].subDetails[0].message + "'>" + _List[x].subDetails[0].message + "</label></div>";
+                //html += "<div class=\"subitem\">";
                 var length = _List[x].subDetails.length;
                 if (length > 1) {
                     for (var i = 1; i < length; i += 1) {
-                        html += "<span>" + _List[x].subDetails[i].time + "</span><span>" + _List[x].subDetails[i].message + "</span>";
+                        html += "<div class=\"subitem clearfloat\"><label title='" + _List[x].subDetails[i].time + "'>" + _List[x].subDetails[i].time + "</label><label title='" + _List[x].subDetails[i].message + "'>" + _List[x].subDetails[i].message + "</label></div>";
                     }
                 }
-                html += "</div></div>";
+                html += "</div>";
             }
         } else {
             html = res.message;
@@ -714,9 +856,19 @@ $(function () {
         var t = setTimeout(show, 1000);
         function show() {
             $('.details').html(html);
+            // $(".details").hide();
+            // $(".details").show(1000);
+            animate.ShowDetails();
             clearTimeout(t);
         }
 
+    }
+    //关闭运单详情
+    CloseDetails = function () {
+        // $(".details").hide(1000);
+        // $(".detailsbox").hide(1000);
+        var animate = new Animate();
+        animate.ClearDetailsbox();
     }
     //获取全国总仓坐标
     function GetProvinces() {
@@ -1724,6 +1876,38 @@ $(function () {
                 ]
             },
             {
+                "name": "湖南",
+                "firstStation": "岳阳市",
+                "Terminus": [
+                    { "name": "长沙市", "value": 95 },
+                    { "name": "益阳市", "value": 90 },
+                    { "name": "株洲市", "value": 80 },
+                    { "name": "张家界市", "value": 70 },
+                    { "name": "常德市", "value": 60 },
+                    { "name": "邵阳市", "value": 50 },
+                    { "name": "永州市", "value": 40 },
+                    { "name": "衡阳市", "value": 30 },
+                    { "name": "怀化市", "value": 20 },
+                    { "name": "娄底市", "value": 10 }
+                ]
+            },
+            {
+                "name": "湖南",
+                "firstStation": "益阳市",
+                "Terminus": [
+                    { "name": "岳阳市", "value": 95 },
+                    { "name": "长沙市", "value": 90 },
+                    { "name": "株洲市", "value": 80 },
+                    { "name": "张家界市", "value": 70 },
+                    { "name": "常德市", "value": 60 },
+                    { "name": "邵阳市", "value": 50 },
+                    { "name": "永州市", "value": 40 },
+                    { "name": "衡阳市", "value": 30 },
+                    { "name": "怀化市", "value": 20 },
+                    { "name": "娄底市", "value": 10 }
+                ]
+            },
+            {
                 "name": "湖北",
                 "firstStation": "武汉市",
                 "Terminus": [
@@ -1749,11 +1933,11 @@ $(function () {
                 ]
             }
         ];
-        var res = {};
+        var res = [];
         for (var x in cityTrunk) {
             if (cityTrunk[x].name === _selectedProvince) {
-                res = cityTrunk[x];
-                break;
+                res.push(cityTrunk[x]);
+                //break;
             }
         }
         return res;
@@ -1766,84 +1950,117 @@ $(function () {
                 "provinces": "北京",
                 "trunk": "上海",
                 "waybill": [
-                    { "WaybillNo": "00AAAA0001", "ExpressNo": "6800133331", "Num": 20 },
-                    { "WaybillNo": "00AAAA0002", "ExpressNo": "6800133332", "Num": 12 },
-                    { "WaybillNo": "00AAAA0003", "ExpressNo": "6800133333", "Num": 30 },
-                    { "WaybillNo": "00AAAA0004", "ExpressNo": "6800133334", "Num": 17 },
-                    { "WaybillNo": "00AAAA0005", "ExpressNo": "6800133335", "Num": 31 },
-                    { "WaybillNo": "01AAAA0001", "ExpressNo": "6800133331", "Num": 20 },
-                    { "WaybillNo": "01AAAA0002", "ExpressNo": "6800133332", "Num": 12 },
-                    { "WaybillNo": "01AAAA0003", "ExpressNo": "6800133333", "Num": 30 },
-                    { "WaybillNo": "01AAAA0004", "ExpressNo": "6800133334", "Num": 17 },
-                    { "WaybillNo": "01AAAA0005", "ExpressNo": "6800133335", "Num": 31 }
+                    { "Warehouse": "北京", "WaybillNo": "00AAAA0001", "ExpressNo": "6800133331", "Num": 20, "shipping": "快递" },
+                    { "Warehouse": "北京", "WaybillNo": "00AAAA0002", "ExpressNo": "6800133332", "Num": 12, "shipping": "快递" },
+                    { "Warehouse": "北京", "WaybillNo": "00AAAA0003", "ExpressNo": "6800133333", "Num": 30, "shipping": "快递" },
+                    { "Warehouse": "北京", "WaybillNo": "00AAAA0004", "ExpressNo": "6800133334", "Num": 17, "shipping": "快递" },
+                    { "Warehouse": "北京", "WaybillNo": "00AAAA0005", "ExpressNo": "6800133335", "Num": 31, "shipping": "快递" },
+                    { "Warehouse": "北京", "WaybillNo": "01AAAA0001", "ExpressNo": "6800133331", "Num": 20, "shipping": "快递" },
+                    { "Warehouse": "北京", "WaybillNo": "01AAAA0002", "ExpressNo": "6800133332", "Num": 12, "shipping": "快递" },
+                    { "Warehouse": "北京", "WaybillNo": "01AAAA0003", "ExpressNo": "6800133333", "Num": 30, "shipping": "快递" },
+                    { "Warehouse": "北京", "WaybillNo": "01AAAA0004", "ExpressNo": "6800133334", "Num": 17, "shipping": "快递" },
+                    { "Warehouse": "北京", "WaybillNo": "01AAAA0005", "ExpressNo": "6800133335", "Num": 31, "shipping": "快递" }
                 ]
             },
             {
                 "provinces": "北京",
                 "trunk": "广州",
                 "waybill": [
-                    { "WaybillNo": "01AAAA0001", "ExpressNo": "6800133331", "Num": 20 },
-                    { "WaybillNo": "01AAAA0002", "ExpressNo": "6800133332", "Num": 12 },
-                    { "WaybillNo": "01AAAA0003", "ExpressNo": "6800133333", "Num": 30 },
-                    { "WaybillNo": "01AAAA0004", "ExpressNo": "6800133334", "Num": 17 },
-                    { "WaybillNo": "01AAAA0005", "ExpressNo": "6800133335", "Num": 31 }
+                    { "Warehouse": "北京", "WaybillNo": "01AAAA0001", "ExpressNo": "6800133331", "Num": 20, "shipping": "快递" },
+                    { "Warehouse": "北京", "WaybillNo": "01AAAA0002", "ExpressNo": "6800133332", "Num": 12, "shipping": "快递" },
+                    { "Warehouse": "北京", "WaybillNo": "01AAAA0003", "ExpressNo": "6800133333", "Num": 30, "shipping": "快递" },
+                    { "Warehouse": "北京", "WaybillNo": "01AAAA0004", "ExpressNo": "6800133334", "Num": 17, "shipping": "快递" },
+                    { "Warehouse": "北京", "WaybillNo": "01AAAA0005", "ExpressNo": "6800133335", "Num": 31, "shipping": "快递" },
                 ]
             },
             {
                 "provinces": "北京",
                 "trunk": "大连",
                 "waybill": [
-                    { "WaybillNo": "10AAAA0001", "ExpressNo": "6800133331", "Num": 20 },
-                    { "WaybillNo": "10AAAA0002", "ExpressNo": "6800133332", "Num": 12 },
-                    { "WaybillNo": "10AAAA0003", "ExpressNo": "6800133333", "Num": 30 },
-                    { "WaybillNo": "10AAAA0004", "ExpressNo": "6800133334", "Num": 17 },
-                    { "WaybillNo": "10AAAA0005", "ExpressNo": "6800133335", "Num": 31 }
+                    { "Warehouse": "北京", "WaybillNo": "10AAAA0001", "ExpressNo": "6800133331", "Num": 20, "shipping": "快递" },
+                    { "Warehouse": "北京", "WaybillNo": "10AAAA0002", "ExpressNo": "6800133332", "Num": 12, "shipping": "快递" },
+                    { "Warehouse": "北京", "WaybillNo": "10AAAA0003", "ExpressNo": "6800133333", "Num": 30, "shipping": "快递" },
+                    { "Warehouse": "北京", "WaybillNo": "10AAAA0004", "ExpressNo": "6800133334", "Num": 17, "shipping": "快递" },
+                    { "Warehouse": "北京", "WaybillNo": "10AAAA0005", "ExpressNo": "6800133335", "Num": 31, "shipping": "快递" }
                 ]
             },
             {
                 "provinces": "北京",
                 "trunk": "南宁",
                 "waybill": [
-                    { "WaybillNo": "11AAAA0001", "ExpressNo": "6800133331", "Num": 20 },
-                    { "WaybillNo": "11AAAA0002", "ExpressNo": "6800133332", "Num": 12 },
-                    { "WaybillNo": "11AAAA0003", "ExpressNo": "6800133333", "Num": 30 },
-                    { "WaybillNo": "11AAAA0004", "ExpressNo": "6800133334", "Num": 17 },
-                    { "WaybillNo": "11AAAA0005", "ExpressNo": "6800133335", "Num": 31 }
+                    { "Warehouse": "北京", "WaybillNo": "11AAAA0001", "ExpressNo": "6800133331", "Num": 20, "shipping": "快递" },
+                    { "Warehouse": "北京", "WaybillNo": "11AAAA0002", "ExpressNo": "6800133332", "Num": 12, "shipping": "快递" },
+                    { "Warehouse": "北京", "WaybillNo": "11AAAA0003", "ExpressNo": "6800133333", "Num": 30, "shipping": "快递" },
+                    { "Warehouse": "北京", "WaybillNo": "11AAAA0004", "ExpressNo": "6800133334", "Num": 17, "shipping": "快递" },
+                    { "Warehouse": "北京", "WaybillNo": "11AAAA0005", "ExpressNo": "6800133335", "Num": 31, "shipping": "快递" }
                 ]
             },
             {
                 "provinces": "北京",
                 "trunk": "拉萨",
                 "waybill": [
-                    { "WaybillNo": "20AAAA0001", "ExpressNo": "6800133331", "Num": 20 },
-                    { "WaybillNo": "20AAAA0002", "ExpressNo": "6800133332", "Num": 12 },
-                    { "WaybillNo": "20AAAA0003", "ExpressNo": "6800133333", "Num": 30 },
-                    { "WaybillNo": "20AAAA0004", "ExpressNo": "6800133334", "Num": 17 },
-                    { "WaybillNo": "20AAAA0005", "ExpressNo": "6800133335", "Num": 31 }
+                    { "Warehouse": "北京", "WaybillNo": "20AAAA0001", "ExpressNo": "6800133331", "Num": 20, "shipping": "快递" },
+                    { "Warehouse": "北京", "WaybillNo": "20AAAA0002", "ExpressNo": "6800133332", "Num": 12, "shipping": "快递" },
+                    { "Warehouse": "北京", "WaybillNo": "20AAAA0003", "ExpressNo": "6800133333", "Num": 30, "shipping": "快递" },
+                    { "Warehouse": "北京", "WaybillNo": "20AAAA0004", "ExpressNo": "6800133334", "Num": 17, "shipping": "快递" },
+                    { "Warehouse": "北京", "WaybillNo": "20AAAA0005", "ExpressNo": "6800133335", "Num": 31, "shipping": "快递" }
                 ]
             },
             {
                 "provinces": "上海",
                 "trunk": "北京",
                 "waybill": [
-                    { "WaybillNo": "21AAAA0001", "ExpressNo": "6800133331", "Num": 20 },
-                    { "WaybillNo": "21AAAA0002", "ExpressNo": "6800133332", "Num": 12 },
-                    { "WaybillNo": "21AAAA0003", "ExpressNo": "6800133333", "Num": 30 },
-                    { "WaybillNo": "21AAAA0004", "ExpressNo": "6800133334", "Num": 17 },
-                    { "WaybillNo": "21AAAA0005", "ExpressNo": "6800133335", "Num": 31 }
+                    { "Warehouse": "上海", "WaybillNo": "21AAAA0001", "ExpressNo": "6800133331", "Num": 20, "shipping": "快递" },
+                    { "Warehouse": "上海", "WaybillNo": "21AAAA0002", "ExpressNo": "6800133332", "Num": 12, "shipping": "快递" },
+                    { "Warehouse": "上海", "WaybillNo": "21AAAA0003", "ExpressNo": "6800133333", "Num": 30, "shipping": "快递" },
+                    { "Warehouse": "上海", "WaybillNo": "21AAAA0004", "ExpressNo": "6800133334", "Num": 17, "shipping": "快递" },
+                    { "Warehouse": "上海", "WaybillNo": "21AAAA0005", "ExpressNo": "6800133335", "Num": 31, "shipping": "快递" }
                 ]
             },
             {
                 "provinces": "上海",
                 "trunk": "大连",
                 "waybill": [
-                    { "WaybillNo": "30AAAA0001", "ExpressNo": "6800133331", "Num": 20 },
-                    { "WaybillNo": "30AAAA0002", "ExpressNo": "6800133332", "Num": 12 },
-                    { "WaybillNo": "30AAAA0003", "ExpressNo": "6800133333", "Num": 30 },
-                    { "WaybillNo": "30AAAA0004", "ExpressNo": "6800133334", "Num": 17 },
-                    { "WaybillNo": "30AAAA0005", "ExpressNo": "6800133335", "Num": 31 }
+                    { "Warehouse": "上海", "WaybillNo": "30AAAA0001", "ExpressNo": "6800133331", "Num": 20, "shipping": "快递" },
+                    { "Warehouse": "上海", "WaybillNo": "30AAAA0002", "ExpressNo": "6800133332", "Num": 12, "shipping": "快递" },
+                    { "Warehouse": "上海", "WaybillNo": "30AAAA0003", "ExpressNo": "6800133333", "Num": 30, "shipping": "快递" },
+                    { "Warehouse": "上海", "WaybillNo": "30AAAA0004", "ExpressNo": "6800133334", "Num": 17, "shipping": "快递" },
+                    { "Warehouse": "上海", "WaybillNo": "30AAAA0005", "ExpressNo": "6800133335", "Num": 31, "shipping": "快递" }
                 ]
             },
+            {
+                "provinces": "长沙市",
+                "trunk": "岳阳市",
+                "waybill": [
+                    { "Warehouse": "长沙市", "WaybillNo": "00AAAA0001", "ExpressNo": "6800133331", "Num": 20, "shipping": "快递" },
+                    { "Warehouse": "长沙市", "WaybillNo": "30AAAA0002", "ExpressNo": "6800133332", "Num": 12, "shipping": "快递" },
+                    { "Warehouse": "长沙市", "WaybillNo": "30AAAA0003", "ExpressNo": "6800133333", "Num": 30, "shipping": "快递" },
+                    { "Warehouse": "长沙市", "WaybillNo": "30AAAA0004", "ExpressNo": "6800133334", "Num": 17, "shipping": "快递" },
+                    { "Warehouse": "长沙市", "WaybillNo": "30AAAA0005", "ExpressNo": "6800133335", "Num": 31, "shipping": "快递" }
+                ]
+            },
+            {
+                "provinces": "长沙市",
+                "trunk": "常德市",
+                "waybill": [
+                    { "Warehouse": "长沙市", "WaybillNo": "00AAAA0001", "ExpressNo": "6800133331", "Num": 20, "shipping": "快递" },
+                    { "Warehouse": "长沙市", "WaybillNo": "30AAAA0002", "ExpressNo": "6800133332", "Num": 12, "shipping": "快递" },
+                    { "Warehouse": "长沙市", "WaybillNo": "30AAAA0003", "ExpressNo": "6800133333", "Num": 30, "shipping": "快递" },
+                    { "Warehouse": "长沙市", "WaybillNo": "30AAAA0004", "ExpressNo": "6800133334", "Num": 17, "shipping": "快递" },
+                    { "Warehouse": "长沙市", "WaybillNo": "30AAAA0005", "ExpressNo": "6800133335", "Num": 31, "shipping": "快递" }
+                ]
+            },
+            {
+                "provinces": "长沙市",
+                "trunk": "益阳市",
+                "waybill": [
+                    { "Warehouse": "长沙市", "WaybillNo": "00AAAA0001", "ExpressNo": "6800133331", "Num": 20, "shipping": "快递" },
+                    { "Warehouse": "长沙市", "WaybillNo": "30AAAA0002", "ExpressNo": "6800133332", "Num": 12, "shipping": "快递" },
+                    { "Warehouse": "长沙市", "WaybillNo": "30AAAA0003", "ExpressNo": "6800133333", "Num": 30, "shipping": "快递" },
+                    { "Warehouse": "长沙市", "WaybillNo": "30AAAA0004", "ExpressNo": "6800133334", "Num": 17, "shipping": "快递" }, ,
+                    { "Warehouse": "长沙市", "WaybillNo": "30AAAA0005", "ExpressNo": "6800133335", "Num": 31, "shipping": "快递" }
+                ]
+            }
         ];
 
         var res = {};
@@ -1869,7 +2086,117 @@ $(function () {
                 "Details": [
                     {
                         "date": "2017-06-19",
-                        "day": "周一",
+                        "address": "广州市",
+                        "subDetails": [
+                            {
+                                "time": "20:26:53",
+                                "message": "您的订单开始处理"
+                            },
+                            {
+                                "time": "20:28:42",
+                                "message": "您的订单待配货"
+                            },
+                            {
+                                "time": "20:28:42",
+                                "message": "卖家发货"
+                            },
+                            {
+                                "time": "20:28:53",
+                                "message": "您的包裹已出库"
+                            }
+                        ]
+                    },
+                    {
+                        "date": "2017-06-19",
+                        "address": "广州市",
+                        "subDetails": [
+                            {
+                                "time": "20:26:53",
+                                "message": "您的订单开始处理"
+                            },
+                            {
+                                "time": "20:28:42",
+                                "message": "您的订单待配货"
+                            },
+                            {
+                                "time": "20:28:42",
+                                "message": "卖家发货"
+                            },
+                            {
+                                "time": "20:28:53",
+                                "message": "您的包裹已出库"
+                            }
+                        ]
+                    },
+                    {
+                        "date": "2017-06-19",
+                        "address": "广州市",
+                        "subDetails": [
+                            {
+                                "time": "20:26:53",
+                                "message": "您的订单开始处理"
+                            },
+                            {
+                                "time": "20:28:42",
+                                "message": "您的订单待配货"
+                            },
+                            {
+                                "time": "20:28:42",
+                                "message": "卖家发货"
+                            },
+                            {
+                                "time": "20:28:53",
+                                "message": "您的包裹已出库"
+                            }
+                        ]
+                    },
+                    {
+                        "date": "2017-06-19",
+                        "address": "广州市",
+                        "subDetails": [
+                            {
+                                "time": "20:26:53",
+                                "message": "您的订单开始处理"
+                            },
+                            {
+                                "time": "20:28:42",
+                                "message": "您的订单待配货"
+                            },
+                            {
+                                "time": "20:28:42",
+                                "message": "卖家发货"
+                            },
+                            {
+                                "time": "20:28:53",
+                                "message": "您的包裹已出库"
+                            }
+                        ]
+                    },
+                    {
+                        "date": "2017-06-19",
+                        "address": "广州市",
+                        "subDetails": [
+                            {
+                                "time": "20:26:53",
+                                "message": "您的订单开始处理"
+                            },
+                            {
+                                "time": "20:28:42",
+                                "message": "您的订单待配货"
+                            },
+                            {
+                                "time": "20:28:42",
+                                "message": "卖家发货"
+                            },
+                            {
+                                "time": "20:28:53",
+                                "message": "您的包裹已出库"
+                            }
+                        ]
+                    },
+                    {
+                        "date": "2017-06-19",
+                        "address": "广州市",
                         "subDetails": [
                             {
                                 "time": "20:26:53",
@@ -1891,7 +2218,7 @@ $(function () {
                     },
                     {
                         "date": "2017-06-20",
-                        "day": "周二",
+                        "address": "深圳市",
                         "subDetails": [
                             {
                                 "time": "02:15:52",
@@ -1905,29 +2232,29 @@ $(function () {
                     },
                     {
                         "date": "2017-06-21",
-                        "day": "周三",
+                        "address": "上海市",
                         "subDetails": [
                             {
                                 "time": "02:15:52",
-                                "message": "深圳转运公司 已收入"
+                                "message": "上海转运公司 已收入"
                             },
                             {
                                 "time": "20:28:42",
-                                "message": "深圳转运公司 已发出，下一站 北京转运中心"
+                                "message": "上海转运公司 已发出，下一站 北京转运中心"
                             }
                         ]
                     },
                     {
                         "date": "2017-06-22",
-                        "day": "周四",
+                        "address": "北京市",
                         "subDetails": [
                             {
                                 "time": "02:15:52",
-                                "message": "深圳转运公司 已收入"
+                                "message": "北京转运公司 已收入"
                             },
                             {
                                 "time": "20:28:42",
-                                "message": "深圳转运公司 已发出，下一站 北京转运中心"
+                                "message": "北京转运公司 已发出，下一站 北京转运中心"
                             }
                         ]
                     }
