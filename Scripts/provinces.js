@@ -399,7 +399,9 @@ function SetCityOption(_selectedProvince) {
                 var dataIndex = param.dataIndex;
                 if (typeof seriesIndex === "string" && typeof dataIndex === "number") {
                     var names = param.name.split(">");
-                    ShowWaybill(names[0].Trim(), names[1].Trim());
+                     if (names[1]) {
+                        ShowWaybill(names[0].Trim(), names[1].Trim());
+                    }
                 } else {
                     console.log(param.data.name);
                 }
@@ -641,7 +643,7 @@ function SetChina(_selectedProvince) {
                             x: 'left',
                             y: 'top'
                         },
-                        roam: true,
+                        roam: false,
                         selectedMode: 'single',
                         itemStyle: {
                             //normal:{label:{show:true}},
