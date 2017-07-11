@@ -24,6 +24,28 @@ body{
     width:300px;
     display:none;
 }
+.back{
+    position: absolute;
+    top:0;
+    left:160px;
+    width:50px;
+    height:24px;
+    line-height: 24px;
+    cursor: pointer;
+    overflow: auto;
+    color:#fff;
+    font-size: 12px;
+    display: none;
+}
+.showtime{
+    position: absolute;
+    top:5px;
+    right:5px;
+    width:auto;
+    height:16px;
+    font-size: 12px;
+    color:#fff;
+}
 .legendbox{
     position: absolute;
     top:0;
@@ -47,7 +69,11 @@ body{
    height: 22px;
    overflow: hidden;
    color:#fff;
-   background: url(x1.png) no-repeat right #000;
+   background: url(x1.png) no-repeat 113px #000;
+/*      width: 240px;
+   height: 34px;
+   overflow: hidden;
+   background: url(new_arrow.jpg) no-repeat right #ddd;*/
 }
 .styled-select img{
     position: absolute;
@@ -59,15 +85,26 @@ body{
 }
 .styled-select select {
    color:#fff;
-   background:  #000;
+   background:  transparent;
    width: 148px;
+   /*border: 1px solid #ccc;*/
    line-height: 22px;
    padding-left:6px;
    font-size: 12px;
-   border: 1px solid #ccc;
-   /*height: 27px;*/
    -webkit-appearance: none; /*for chrome*/
+   /*height: 27px;*/
 
+/*    background: transparent;
+   width: 268px;
+   padding: 5px;
+   font-size: 16px;
+   border: 1px solid #ccc;
+   height: 34px;
+   -webkit-appearance: none;*/
+
+}
+.styled-select select option{
+    background-color: #000;
 }
 .label{
     float:left;
@@ -92,25 +129,50 @@ body{
 }
 .waybillList{
     position: absolute;
-    top:68px;
+    top:38px;
     right:0;
     /*width:312px;*/
     width:350px;
-    height:150px;
+    height:172px;
     display: none;
     color:#fff;
     overflow: hidden;
 }
+.waybilltitle{
+    position: absolute;
+    top:0;
+    left:0;
+    /*width:312px;*/
+    width:348px;
+    height:22px;
+    border:1px #ccc solid;
+    display: block;
+    color:#fff;
+    overflow: hidden;
+}
+.waybilltitle .statetitle{
+    position: absolute;
+    left:0;
+    width:330px;
+    line-height: 22px;
+    text-align: center;
+}
+.waybilltitle .statetitle .Highlight{
+    color:#FF4500;
+}
 .CloseWaybill{
     position: absolute;
     width:20px;
+    right:0;
     display: block;
     height:20px;
     background-image: url(g.png);
 }
 .waybillList .table{
-    margin-left:20px;
-    width:328px;
+    /*margin-left:20px;*/
+    position: absolute;
+    top:22px;
+    width:348px;
     height:148px;
     border:1px #8D8D8D solid;
     font-size: 12px;
@@ -135,10 +197,10 @@ body{
 
 }
 .waybillList .table div>label:nth-child(1){
-    width:99px;
+    width:104px;
 }
 .waybillList .table div>label:nth-child(2){
-    width:108px;
+    width:123px;
 }
 .waybillList .table div>label:nth-child(3){
     width:59px;
@@ -166,7 +228,7 @@ body{
     top:219px;
     right:0;
     /*width:350px;*/
-    width:330px;
+    width:350px;
     height:230px;
     color:#405C8E;
     overflow: hidden;
@@ -174,7 +236,7 @@ body{
     display: none;
 }
 .detailsbox .table{
-    width:328px;
+    width:348px;
     height:228px;
     border:1px #8D8D8D solid;
 }
@@ -186,28 +248,74 @@ body{
     float: left;
     width:auto;
     text-align: left;
-       word-break:break-all;
+    word-break:break-all;
     overflow: visible;
 }
+.details .item{
+    margin-left:5px;
+    border-left:1px #ccc solid;
+    position: relative;
+}
+.details .item:not(:first-child){
+    padding-top:10px;
+}
+
+.details .item label:last-child{
+    position: absolute;
+    background-color: #FFDAB9;
+    border-radius: 50%;
+    width:12px;
+    height:12px;
+    left:-6px;
+    top:3px;
+}
+.details .item:not(:first-child) label:last-child{
+    top:13px;
+    background-color: #fff;
+}
+.details .item label:last-child span{
+    position: absolute;
+    background-color: red;
+    border-radius: 50%;
+    width:6px;
+    height:6px;
+    left:3px;
+    top:3px;
+}
+.details .item:not(:first-child) label:last-child span{
+    background-color: #ccc;
+}
+
+/*.details .item label:nth-child(1){
+    width:12px;
+}
+.details .item label:nth-child(1) span{
+    border-radius: 50%;
+    background-color: red;
+    width:100%;
+}*/
 .details .item label:nth-child(1){
-    width:70px;
+    width:105px;
+    margin-left:10px;
 }
 .details .item label:nth-child(2){
-    width:42px;
-}
-.details .item label:nth-child(3){
     width:56px;
 }
-.details .item label:nth-child(4){
-    width:160px;
+.details .item label:nth-child(3){
+    width:171px;
 
+}
+.details .subitem{
+    padding-top:3px;
+    margin-left:5px;
+    border-left:1px #ccc solid;
 }
 .details .subitem label:nth-child(1){
     width:56px;
-    margin-left:112px;
+    margin-left:115px;
 }
 .details .subitem label:nth-child(2){
-    width:160px;
+    width:171px;
 }
 
 .CloseDetails{
